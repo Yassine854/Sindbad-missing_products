@@ -1,14 +1,13 @@
 from fastapi import FastAPI, UploadFile, File, Request
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
-import pandas as pd
 import os
 import shutil
 import zipfile
+from openpyxl import load_workbook, Workbook
 
 app = FastAPI()
 
-# Ensure templates are resolved from the directory of this file (works in containers like Render)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
@@ -16,11 +15,11 @@ OUTPUT_DIR = os.path.join(BASE_DIR, "outputs")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 cam_sites = [
-    "CAM01","CAM02","CAM03","CAM04","CAM05","CAM06",
-    "CAM36","CAM37","CAM38","CAM48","CAM49"
+    "CAM01", "CAM02", "CAM03", "CAM04", "CAM05", "CAM06",
+    "CAM36", "CAM37", "CAM38", "CAM48", "CAM49"
 ]
 
-ignored_codes = [
+ignored_codes = set([
     "CASHOUMACHLAV","CASNAPBOROVA200M","CASNAPBOROVA250M","CASNAPBORREC250M",
     "CASNAPCAR140M","CASNAPCARCIR160M","CASNAPOVACIR2M","CASNAPRECTCIR20M",
     "CASNAPRECTCIR25M","CASNAPRONCIR140M","CASNAPRONCIR160M","CASTABCUIS",
@@ -64,76 +63,130 @@ ignored_codes = [
     "INNETIRBV300M","ECOPAPCUI5MLF","ECOPAPCUI6M","BAPSASCONGSB1L",
     "BAPSASCONGSB2L","HYPSACCUISFOR","BAPSACPB100LB","BAPSACPB50L",
     "BAPSACPB70","BAPSACPB70B","BAPSACPB70N","BAPSACPBHD30L"
-]
+])
 
+def _norm(v):
+    if v is None:
+        return ""
+    return str(v).strip().upper()
+
+def _to_float(v):
+    try:
+        if v is None or v == "":
+            return None
+        return float(v)
+    except Exception:
+        return None
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
-    # `TemplateResponse` expects context dict; make sure template directory resolves correctly in deployment.
     return templates.TemplateResponse("index.html", {"request": request})
-
 
 @app.post("/upload/")
 async def upload(file: UploadFile = File(...)):
-
     temp_path = os.path.join(BASE_DIR, f"temp_{file.filename}")
 
     with open(temp_path, "wb") as f:
         shutil.copyfileobj(file.file, f)
 
-    df = pd.read_excel(temp_path, header=1)
-    df.columns = df.columns.str.strip()
+    try:
+        wb = load_workbook(temp_path, data_only=True)
+        ws = wb.active
 
-    df["Site"] = df["Site"].str.strip().str.upper()
-    df["Désignation Article"] = df["Désignation Article"].str.strip().str.upper()
+        # pandas header=1 => header is Excel row 2 (1-indexed)
+        header_row_idx = 2
+        headers = {}
+        for col_idx, cell in enumerate(ws[header_row_idx], start=1):
+            name = str(cell.value).strip() if cell.value is not None else ""
+            if name:
+                headers[name] = col_idx
 
-    sfx = df[df["Site"] == "SFX"].copy()
-    sfx["Stock Disponible"] = pd.to_numeric(sfx["Stock Disponible"], errors="coerce")
-    sfx = sfx[sfx["Stock Disponible"] >= 4]
+        required = ["Site", "Code", "Désignation Article"]
+        missing_cols = [c for c in required if c not in headers]
+        if missing_cols:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": "Missing required columns in Excel header row (row 2).",
+                    "missing": missing_cols,
+                    "found": list(headers.keys())
+                }
+            )
 
-    sfx_products = set(zip(sfx["Code"], sfx["Désignation Article"]))
+        site_col = headers["Site"]
+        code_col = headers["Code"]
+        des_col = headers["Désignation Article"]
+        stock_col = headers.get("Stock Disponible")
 
-    results = []
+        # Build products sets
+        sfx_products = set()
+        cam_products_map = {cam: set() for cam in cam_sites}
 
-    for cam in cam_sites:
+        for row in ws.iter_rows(min_row=header_row_idx + 1, values_only=True):
+            site = _norm(row[site_col - 1])
+            if not site:
+                continue
 
-        cam_products = set(zip(
-            df[df["Site"] == cam]["Code"],
-            df[df["Site"] == cam]["Désignation Article"]
-        ))
+            code = _norm(row[code_col - 1])
+            des = _norm(row[des_col - 1])
 
-        missing = sfx_products - cam_products
-        missing = {p for p in missing if p[0] not in ignored_codes}
+            if not code or not des:
+                continue
 
-        designations = [p[1] for p in missing]
+            if site == "SFX":
+                if stock_col is not None:
+                    stock_val = _to_float(row[stock_col - 1])
+                    if stock_val is None or stock_val < 4:
+                        continue
+                sfx_products.add((code, des))
+            elif site in cam_products_map:
+                cam_products_map[site].add((code, des))
 
-        out_file = os.path.join(OUTPUT_DIR, f"{cam}.xlsx")
-        pd.DataFrame({"Article": designations}).to_excel(out_file, index=False)
+        results = []
 
-        results.append({
-            "cam": cam,
-            "count": len(designations),
-            "file": f"/download/{cam}.xlsx"
-        })
+        # Ensure output dir clean-ish
+        os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    # ZIP
-    zip_path = os.path.join(OUTPUT_DIR, "all_cams.zip")
-
-    with zipfile.ZipFile(zip_path, "w") as z:
         for cam in cam_sites:
-            z.write(os.path.join(OUTPUT_DIR, f"{cam}.xlsx"), f"{cam}.xlsx")
+            missing = sfx_products - cam_products_map[cam]
+            missing = {p for p in missing if p[0] not in ignored_codes}
 
-    os.remove(temp_path)
+            designations = sorted([p[1] for p in missing])
 
-    return {
-        "results": results,
-        "zip": "/download/all"
-    }
+            out_file = os.path.join(OUTPUT_DIR, f"{cam}.xlsx")
 
+            out_wb = Workbook()
+            out_ws = out_wb.active
+            out_ws.title = "Sheet1"
+
+            out_ws["A1"] = f"CAM Site: {cam}"
+            out_ws["A2"] = "Article"
+
+            for i, des in enumerate(designations, start=3):
+                out_ws.cell(row=i, column=1, value=des)
+
+            out_wb.save(out_file)
+
+            results.append({
+                "cam": cam,
+                "count": len(designations),
+                "file": f"/download/{cam}.xlsx"
+            })
+
+        zip_path = os.path.join(OUTPUT_DIR, "all_cams.zip")
+        with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as z:
+            for cam in cam_sites:
+                z.write(os.path.join(OUTPUT_DIR, f"{cam}.xlsx"), f"{cam}.xlsx")
+
+        return {"results": results, "zip": "/download/all"}
+
+    finally:
+        # Always cleanup temp upload
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
 
 @app.get("/download/{file}")
 def download(file: str):
-
     if file == "all":
         return FileResponse(
             os.path.join(OUTPUT_DIR, "all_cams.zip"),
