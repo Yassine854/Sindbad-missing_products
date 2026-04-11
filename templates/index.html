@@ -49,32 +49,41 @@
 
 <script>
 document.getElementById("form").onsubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    let fd = new FormData();
-    fd.append("file", document.querySelector("input").files[0]);
+  const div = document.getElementById("results");
+  div.innerHTML = "Uploading...";
 
-    let res = await fetch("/upload/", {
-        method: "POST",
-        body: fd
-    });
+  const fd = new FormData();
+  fd.append("file", document.querySelector("input").files[0]);
 
-    let data = await res.json();
+  const res = await fetch("/upload/", { method: "POST", body: fd });
 
-    let div = document.getElementById("results");
-    div.innerHTML = "<h2>Results</h2>";
+  if (!res.ok) {
+    const text = await res.text();
+    div.innerHTML = `
+      <div class="card" style="border-left: 6px solid #ef4444;">
+        <b>Upload failed (HTTP ${res.status})</b><br>
+        <pre style="text-align:left; white-space:pre-wrap; margin-top:8px;">${text}</pre>
+      </div>
+    `;
+    return;
+  }
 
-    data.results.forEach(r => {
-        div.innerHTML += `
-            <div class="card">
-                <b>${r.cam}</b><br>
-                Missing: ${r.count}<br>
-                <a href="${r.file}">Download</a>
-            </div>
-        `;
-    });
+  const data = await res.json();
 
-    div.innerHTML += `<br><a href="${data.zip}">⬇ Download ALL ZIP</a>`;
+  div.innerHTML = "<h2>Results</h2>";
+  data.results.forEach(r => {
+    div.innerHTML += `
+      <div class="card">
+        <b>${r.cam}</b><br>
+        Missing: ${r.count}<br>
+        <a href="${r.file}">Download</a>
+      </div>
+    `;
+  });
+
+  div.innerHTML += `<br><a href="${data.zip}">Download ALL (ZIP)</a>`;
 };
 </script>
 
