@@ -8,9 +8,11 @@ import zipfile
 
 app = FastAPI()
 
-templates = Jinja2Templates(directory="templates")
+# Ensure templates are resolved from the directory of this file (works in containers like Render)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
-OUTPUT_DIR = "outputs"
+OUTPUT_DIR = os.path.join(BASE_DIR, "outputs")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 cam_sites = [
@@ -64,15 +66,17 @@ ignored_codes = [
     "BAPSACPB70","BAPSACPB70B","BAPSACPB70N","BAPSACPBHD30L"
 ]
 
+
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
+    # `TemplateResponse` expects context dict; make sure template directory resolves correctly in deployment.
     return templates.TemplateResponse("index.html", {"request": request})
 
 
 @app.post("/upload/")
 async def upload(file: UploadFile = File(...)):
 
-    temp_path = f"temp_{file.filename}"
+    temp_path = os.path.join(BASE_DIR, f"temp_{file.filename}")
 
     with open(temp_path, "wb") as f:
         shutil.copyfileobj(file.file, f)
