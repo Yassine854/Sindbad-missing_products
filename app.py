@@ -20,17 +20,69 @@ OUTPUT_DIR = os.path.join(BASE_DIR, "outputs")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 cam_sites = [
-    "CAM01","CAM02","CAM03","CAM04","CAM05","CAM06",
-    "CAM36","CAM37","CAM38","CAM48","CAM49"
+    "CAM01", "CAM02", "CAM03", "CAM04", "CAM05", "CAM06",
+    "CAM36", "CAM37", "CAM38", "CAM48", "CAM49"
 ]
 
-# IMPORTANT: paste your full ignored codes list here (same as before)
-ignored_codes = [ "CASHOUMACHLAV", "CASNAPBOROVA200M", "CASNAPBOROVA250M", "CASNAPBORREC250M", "CASNAPCAR140M", "CASNAPCARCIR160M", "CASNAPOVACIR2M", "CASNAPRECTCIR20M", "CASNAPRECTCIR25M", "CASNAPRONCIR140M", "CASNAPRONCIR160M", "CASTABCUIS", "DEKBARQALUM1025L", "DEKBARQALUM5069L", "FIMBARGL080", "GEATBARGALU3CP", "GEATBARGALUCAK", "GEATBARGALUGM", "GEATBARGALUMM", "GEATBARGALUPM", "GEATBOLALUM87", "LBP03BARALUMCKE", "LBP03BARALUPOGM", "LBP04BAR1POC", "LBP04BARALUP2", "LBP04BARPIZMD", "LBP04PLASPEGRI", "LBP05BARALUPOPM", "LBPBARCAR50CCCV", "LBPBARQALUM504", "LBPLT03BARQALCK", "LBPPALTALUMRECT", "UNVBOWSAL69OZ", "UNVECOTRKF1500", "UNVECOTRKF500", "DIVBARPETL101", "FIMBARGL332", "LBPBARCAR900GRCV", "LBPBARQPET850L", "TERBARQPET1000", "TERBARQPET2000", "UNVBOWSAL43OZ", "GEATCVBARGALUGM", "GEATCVBARGALUMM", "ECOPOCHFRITBL", "ECOPOCHMBL155", "ECOPOCHMBL255", "ECOPOCHMBL355", "SITPOIGAT120KF", "SITPOIGAT15", "SITPOIGAT20", "DIVBOUGANN00", "DIVBOUGANN02", "DIVBOUGANN03", "DIVBOUGANN04", "DIVBOUGANN05", "DIVBOUGANN06", "DIVBOUGANN07", "DIVBOUGANN08", "DIVBOUGANN09", "DIVBOUTENIGH", "HYP50CVPETTRA35CL", "INN50COUVPET", "VAR50COVPET25", "LBPCOUTBOIS", "LBPCUILLBOIS", "LBPFOURBOIS", "DIVCOUTPLAS100", "LBP20COUTPLASNO", "WAFCOUPLNOI", "DIVCUISOPLAS100", "DIVPALEGLACOL", "GOLTCUIAGLAGLD", "INDCUIACAFTR", "LBP20CUILPLSTRG", "LBP20CUILPLSTRO", "LBPAGITCUILCAFTR", "LBPCUIACAF", "LBPCUILASOUP100", "WAFCUILUXTRP", "WAFCUISOPNO", "LBP50COUTTRANSP", "LBPCOUTPLAST100", "DIVFOUPLAS100", "LBPFOUCPLAST100", "LBPFOUCPLASTBER", "WAFFOURLUXTRP", "LBPSURBLSJETB", "HYGTOQMSCHEF", "ALPGANVINYMEDM", "BPGANSPCOT", "INNGANHDPEL", "LBPCOUPBOIS12", "LBPPICKBUTTE12", "LBPPICKEVANT", "CASHOUSMICOND", "LBPPOCHBAG", "LBPPOCHBAGIMP", "CASSETAPTIS3P", "EMBTAGITAT", "ALPBROCHETT20", "ALP100CUREDENTSB", "ALP500CUREDENTSB", "LBPLBCD500P", "DIVPAIFELX100", "GOLPAISIMP", "GOLSPAIJUS", "PAP20DEN075", "PAP250DEN075", "PAP250DEN085", "MINVERPHYR90P", "WAFVERPYCRI250", "WAFVERPYCRI45", "LBP25TASECAPPUC", "VAR50GOBCART12", "VAR50GOBCART18", "VAR50GOBCARTFR25", "VAR50GOBCARTFR35", "VAR50GOBCARTKF25", "VAR50GOBCARTVR22", "INN50GOBPET10OZ", "INN50GOBPET12OZ", "INN50GOBPET14OZ", "INN50GOBPET16OZ", "ADMPAPHYGIMP4", "LBPPAPHGY4CH", "MBAPAPHYGCOM", "MBAPAPYHG300G", "EMESSMAI150F", "GEATESSTOUT400", "GEATESSTOUT600", "LBPESSTTLILATTEX", "LBPESSTTSCOM400", "LBPPAPESSTCHAR2", "MBAESSTTJAB400", "MBAESSTTJAB750", "ADMPAPSERVREST", "GEATPAPSERV3030", "MBASERV3030PP", "MBASERVROURA", "ECORPAPCUI500F", "ECOSOPLAIMP32", "TTALUMLAF8M", "TTALUMSTR08M", "DEKALUMFOIDA", "TTALUMLAF100M", "TTALUMSTR100M", "INNPAPALU400", "TTALUMSTR12M", "TTALUMSTR16M", "TTALUMLAF430", "TTALUMLAF70M", "LBPLOALU12FI12G", "INNETIRBLAF08M", "TTETIRBLAF08M", "INNETIRBLAF100M", "LBPLOCUI6FI8G", "TTETIRBLAF12M", "TTETIRBLAF16M", "HYPFILETIR200M", "INNETIRBV300M", "ECOPAPCUI5MLF", "ECOPAPCUI6M", "BAPSASCONGSB1L", "BAPSASCONGSB2L", "HYPSACCUISFOR", "BAPSACPB100LB", "BAPSACPB50L", "BAPSACPB70", "BAPSACPB70B", "BAPSACPB70N", "BAPSACPBHD30L" ]
+# Keep your full ignored codes list here (your repo already has it)
+ignored_codes = [
+    "CASHOUMACHLAV", "CASNAPBOROVA200M", "CASNAPBOROVA250M", "CASNAPBORREC250M",
+    "CASNAPCAR140M", "CASNAPCARCIR160M", "CASNAPOVACIR2M", "CASNAPRECTCIR20M",
+    "CASNAPRECTCIR25M", "CASNAPRONCIR140M", "CASNAPRONCIR160M", "CASTABCUIS",
+    "DEKBARQALUM1025L", "DEKBARQALUM5069L", "FIMBARGL080", "GEATBARGALU3CP",
+    "GEATBARGALUCAK", "GEATBARGALUGM", "GEATBARGALUMM", "GEATBARGALUPM",
+    "GEATBOLALUM87", "LBP03BARALUMCKE", "LBP03BARALUPOGM", "LBP04BAR1POC",
+    "LBP04BARALUP2", "LBP04BARPIZMD", "LBP04PLASPEGRI", "LBP05BARALUPOPM",
+    "LBPBARCAR50CCCV", "LBPBARQALUM504", "LBPLT03BARQALCK", "LBPPALTALUMRECT",
+    "UNVBOWSAL69OZ", "UNVECOTRKF1500", "UNVECOTRKF500", "DIVBARPETL101",
+    "FIMBARGL332", "LBPBARCAR900GRCV", "LBPBARQPET850L", "TERBARQPET1000",
+    "TERBARQPET2000", "UNVBOWSAL43OZ", "GEATCVBARGALUGM", "GEATCVBARGALUMM",
+    "ECOPOCHFRITBL", "ECOPOCHMBL155", "ECOPOCHMBL255", "ECOPOCHMBL355",
+    "SITPOIGAT120KF", "SITPOIGAT15", "SITPOIGAT20", "DIVBOUGANN00",
+    "DIVBOUGANN02", "DIVBOUGANN03", "DIVBOUGANN04", "DIVBOUGANN05",
+    "DIVBOUGANN06", "DIVBOUGANN07", "DIVBOUGANN08", "DIVBOUGANN09",
+    "DIVBOUTENIGH", "HYP50CVPETTRA35CL", "INN50COUVPET", "VAR50COVPET25",
+    "LBPCOUTBOIS", "LBPCUILLBOIS", "LBPFOURBOIS", "DIVCOUTPLAS100",
+    "LBP20COUTPLASNO", "WAFCOUPLNOI", "DIVCUISOPLAS100", "DIVPALEGLACOL",
+    "GOLTCUIAGLAGLD", "INDCUIACAFTR", "LBP20CUILPLSTRG", "LBP20CUILPLSTRO",
+    "LBPAGITCUILCAFTR", "LBPCUIACAF", "LBPCUILASOUP100", "WAFCUILUXTRP",
+    "WAFCUISOPNO", "LBP50COUTTRANSP", "LBPCOUTPLAST100", "DIVFOUPLAS100",
+    "LBPFOUCPLAST100", "LBPFOUCPLASTBER", "WAFFOURLUXTRP", "LBPSURBLSJETB",
+    "HYGTOQMSCHEF", "ALPGANVINYMEDM", "BPGANSPCOT", "INNGANHDPEL",
+    "LBPCOUPBOIS12", "LBPPICKBUTTE12", "LBPPICKEVANT", "CASHOUSMICOND",
+    "LBPPOCHBAG", "LBPPOCHBAGIMP", "CASSETAPTIS3P", "EMBTAGITAT",
+    "ALPBROCHETT20", "ALP100CUREDENTSB", "ALP500CUREDENTSB", "LBPLBCD500P",
+    "DIVPAIFELX100", "GOLPAISIMP", "GOLSPAIJUS", "PAP20DEN075",
+    "PAP250DEN075", "PAP250DEN085", "MINVERPHYR90P", "WAFVERPYCRI250",
+    "WAFVERPYCRI45", "LBP25TASECAPPUC", "VAR50GOBCART12", "VAR50GOBCART18",
+    "VAR50GOBCARTFR25", "VAR50GOBCARTFR35", "VAR50GOBCARTKF25", "VAR50GOBCARTVR22",
+    "INN50GOBPET10OZ", "INN50GOBPET12OZ", "INN50GOBPET14OZ", "INN50GOBPET16OZ",
+    "ADMPAPHYGIMP4", "LBPPAPHGY4CH", "MBAPAPHYGCOM", "MBAPAPYHG300G",
+    "EMESSMAI150F", "GEATESSTOUT400", "GEATESSTOUT600", "LBPESSTTLILATTEX",
+    "LBPESSTTSCOM400", "LBPPAPESSTCHAR2", "MBAESSTTJAB400", "MBAESSTTJAB750",
+    "ADMPAPSERVREST", "GEATPAPSERV3030", "MBASERV3030PP", "MBASERVROURA",
+    "ECORPAPCUI500F", "ECOSOPLAIMP32", "TTALUMLAF8M", "TTALUMSTR08M",
+    "DEKALUMFOIDA", "TTALUMLAF100M", "TTALUMSTR100M", "INNPAPALU400",
+    "TTALUMSTR12M", "TTALUMSTR16M", "TTALUMLAF430", "TTALUMLAF70M",
+    "LBPLOALU12FI12G", "INNETIRBLAF08M", "TTETIRBLAF08M", "INNETIRBLAF100M",
+    "LBPLOCUI6FI8G", "TTETIRBLAF12M", "TTETIRBLAF16M", "HYPFILETIR200M",
+    "INNETIRBV300M", "ECOPAPCUI5MLF", "ECOPAPCUI6M", "BAPSASCONGSB1L",
+    "BAPSASCONGSB2L", "HYPSACCUISFOR", "BAPSACPB100LB", "BAPSACPB50L",
+    "BAPSACPB70", "BAPSACPB70B", "BAPSACPB70N", "BAPSACPBHD30L"
+]
+
+# faster membership test
+IGNORED_CODES_SET = set(ignored_codes)
+
+# output formatting
+PRODUCTS_PER_COLUMN = 40
+
 
 def _norm(v):
     if v is None:
         return ""
     return str(v).strip().upper()
+
 
 def _to_float(v):
     try:
@@ -40,6 +92,7 @@ def _to_float(v):
     except Exception:
         return None
 
+
 def _headers_from_row(values):
     headers = {}
     for i, val in enumerate(values, start=1):
@@ -47,6 +100,7 @@ def _headers_from_row(values):
         if name:
             headers[name] = i
     return headers
+
 
 def _extract_rows_xlsx(path: str):
     wb = load_workbook(path, data_only=True)
@@ -65,6 +119,7 @@ def _extract_rows_xlsx(path: str):
 
     return headers, iter_data_rows()
 
+
 def _extract_rows_xls(path: str):
     book = xlrd.open_workbook(path)
     sheet = book.sheet_by_index(0)
@@ -80,9 +135,55 @@ def _extract_rows_xls(path: str):
 
     return headers, iter_data_rows()
 
+
+def write_staggered_excel(out_file: str, cam: str, designations: list[str]) -> None:
+    """
+    Colab-like output:
+    - 40 items per column
+    - blank separator column between data columns
+    - A1 = CAM Site: {cam}
+    - row 2 headers = "Article", blank, "Article", blank, ...
+    - data starts row 3
+    """
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Sheet1"
+
+    ws["A1"] = f"CAM Site: {cam}"
+
+    if not designations:
+        ws.cell(row=2, column=1, value="Article")
+        wb.save(out_file)
+        return
+
+    num_products = len(designations)
+    num_data_columns = (num_products + PRODUCTS_PER_COLUMN - 1) // PRODUCTS_PER_COLUMN
+
+    # headers
+    col = 1
+    for i in range(num_data_columns):
+        ws.cell(row=2, column=col, value="Article")
+        col += 1
+        if i < num_data_columns - 1:
+            col += 1  # blank separator col
+
+    # data
+    for i in range(num_data_columns):
+        start = i * PRODUCTS_PER_COLUMN
+        end = min((i + 1) * PRODUCTS_PER_COLUMN, num_products)
+        chunk = designations[start:end]
+
+        data_col = 1 + i * 2  # 1,3,5,... separator columns 2,4,6,...
+        for r, value in enumerate(chunk, start=3):
+            ws.cell(row=r, column=data_col, value=value)
+
+    wb.save(out_file)
+
+
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
 
 @app.post("/upload/")
 async def upload(file: UploadFile = File(...)):
@@ -101,7 +202,10 @@ async def upload(file: UploadFile = File(...)):
             elif ext == ".xls":
                 headers, rows_iter = _extract_rows_xls(temp_path)
             else:
-                return JSONResponse(status_code=400, content={"error": "Unsupported file type. Upload .xls or .xlsx"})
+                return JSONResponse(
+                    status_code=400,
+                    content={"error": "Unsupported file type. Upload .xls or .xlsx"}
+                )
         except (InvalidFileException, zipfile.BadZipFile, xlrd.biffh.XLRDError) as e:
             return JSONResponse(status_code=400, content={"error": "Invalid Excel file.", "details": str(e)})
 
@@ -152,21 +256,12 @@ async def upload(file: UploadFile = File(...)):
 
         for cam in cam_sites:
             missing = sfx_products - cam_products_map[cam]
-            missing = {p for p in missing if p[0] not in ignored_codes}
+            missing = {p for p in missing if p[0] not in IGNORED_CODES_SET}
 
             designations = sorted([p[1] for p in missing])
 
             out_file = os.path.join(OUTPUT_DIR, f"{cam}.xlsx")
-            out_wb = Workbook()
-            out_ws = out_wb.active
-            out_ws.title = "Sheet1"
-            out_ws["A1"] = f"CAM Site: {cam}"
-            out_ws["A2"] = "Article"
-
-            for i, desig in enumerate(designations, start=3):
-                out_ws.cell(row=i, column=1, value=desig)
-
-            out_wb.save(out_file)
+            write_staggered_excel(out_file, cam, designations)
 
             results.append({"cam": cam, "count": len(designations), "file": f"/download/{cam}.xlsx"})
 
@@ -183,6 +278,7 @@ async def upload(file: UploadFile = File(...)):
     finally:
         if os.path.exists(temp_path):
             os.remove(temp_path)
+
 
 @app.get("/download/{file}")
 def download(file: str):
