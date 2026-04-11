@@ -5,6 +5,7 @@ import os
 import shutil
 import zipfile
 from openpyxl import load_workbook, Workbook
+from openpyxl.utils.exceptions import InvalidFileException
 
 app = FastAPI()
 
@@ -90,8 +91,19 @@ async def upload(file: UploadFile = File(...)):
         shutil.copyfileobj(file.file, f)
 
     try:
-        wb = load_workbook(temp_path, data_only=True)
+        try:
+            wb = load_workbook(temp_path, data_only=True)
+        except (InvalidFileException, zipfile.BadZipFile):
+            return JSONResponse(
+                status_code=400,
+                content={"error": "Invalid file. Please upload a valid .xlsx Excel file."}
+            )
         ws = wb.active
+        if ws is None:
+            return JSONResponse(
+                status_code=400,
+                content={"error": "The uploaded Excel file has no active sheet."}
+            )
 
         # pandas header=1 => header is Excel row 2 (1-indexed)
         header_row_idx = 2
@@ -185,15 +197,21 @@ async def upload(file: UploadFile = File(...)):
         if os.path.exists(temp_path):
             os.remove(temp_path)
 
+_ZIP_PATH = os.path.join(OUTPUT_DIR, "all_cams.zip")
+_CAM_FILE_MAP: dict[str, str] = {f"{cam}.xlsx": os.path.join(OUTPUT_DIR, f"{cam}.xlsx") for cam in cam_sites}
+
 @app.get("/download/{file}")
 def download(file: str):
     if file == "all":
-        return FileResponse(
-            os.path.join(OUTPUT_DIR, "all_cams.zip"),
-            filename="all_cams.zip"
-        )
+        if not os.path.isfile(_ZIP_PATH):
+            return JSONResponse(status_code=404, content={"error": "No processed data available. Please upload a file first."})
+        return FileResponse(_ZIP_PATH, filename="all_cams.zip")
 
-    return FileResponse(
-        os.path.join(OUTPUT_DIR, file),
-        filename=file
-    )
+    if file not in _CAM_FILE_MAP:
+        return JSONResponse(status_code=404, content={"error": "File not found."})
+
+    # Path is looked up from a pre-built map of hardcoded paths; user input is only used as the key.
+    path = _CAM_FILE_MAP[file]
+    if not os.path.isfile(path):
+        return JSONResponse(status_code=404, content={"error": "File not found. Please upload a file first."})
+    return FileResponse(path, filename=file)
