@@ -1,7 +1,9 @@
-fastapi
-uvicorn
-pandas
-openpyxl
-xlsxwriter
-python-multipart
-jinja2
+fastapi==0.115.0
+starlette==0.38.6
+jinja2==3.1.4
+uvicorn[standard]==0.30.6
+anyio==4.4.0
+python-multipart==0.0.9
+pandas==2.2.2
+openpyxl==3.1.5
+xlsxwriter==3.2.0
