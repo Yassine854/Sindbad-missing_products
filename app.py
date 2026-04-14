@@ -136,46 +136,73 @@ def _extract_rows_xls(path: str):
     return headers, iter_data_rows()
 
 
-def write_staggered_excel(out_file: str, cam: str, designations: list[str]) -> None:
+def _read_stock_time(path: str, ext: str) -> str:
+    """Read cell F1 (row 1, column 6) from the first sheet."""
+    try:
+        if ext == ".xlsx":
+            wb = load_workbook(path, data_only=True)
+            ws = wb.active
+            if ws is None:
+                return ""
+            val = ws.cell(row=1, column=6).value
+            return str(val).strip() if val is not None else ""
+        elif ext == ".xls":
+            book = xlrd.open_workbook(path)
+            sheet = book.sheet_by_index(0)
+            if sheet.nrows < 1 or sheet.ncols < 6:
+                return ""
+            val = sheet.cell_value(0, 5)
+            return str(val).strip() if val else ""
+    except Exception:
+        return ""
+    return ""
+
+
+def write_staggered_excel(out_file: str, cam: str, rows: list, stock_time: str = "") -> None:
     """
     Colab-like output:
     - 40 items per column
     - blank separator column between data columns
-    - A1 = CAM Site: {cam}
-    - row 2 headers = "Article", blank, "Article", blank, ...
-    - data starts row 3
+    - A1 = Site: {cam} | Stock time: {stock_time}
+    - row 2 headers = "SFX", "Article", blank, "SFX", "Article", blank, ...
+    - data starts row 3: sfx_qty in SFX col, designation in Article col
     """
     wb = Workbook()
     ws = wb.active
     ws.title = "Sheet1"
 
-    ws["A1"] = f"CAM Site: {cam}"
+    if stock_time:
+        ws["A1"] = f"Site: {cam} | Stock time: {stock_time}"
+    else:
+        ws["A1"] = f"Site: {cam}"
 
-    if not designations:
-        ws.cell(row=2, column=1, value="Article")
+    if not rows:
+        ws.cell(row=2, column=1, value="SFX")
+        ws.cell(row=2, column=2, value="Article")
         wb.save(out_file)
         return
 
-    num_products = len(designations)
+    num_products = len(rows)
     num_data_columns = (num_products + PRODUCTS_PER_COLUMN - 1) // PRODUCTS_PER_COLUMN
 
-    # headers
-    col = 1
+    # headers: each group uses 3 cols (SFX, Article, blank separator)
     for i in range(num_data_columns):
-        ws.cell(row=2, column=col, value="Article")
-        col += 1
-        if i < num_data_columns - 1:
-            col += 1  # blank separator col
+        sfx_col = 1 + i * 3
+        article_col = 2 + i * 3
+        ws.cell(row=2, column=sfx_col, value="SFX")
+        ws.cell(row=2, column=article_col, value="Article")
 
     # data
     for i in range(num_data_columns):
         start = i * PRODUCTS_PER_COLUMN
         end = min((i + 1) * PRODUCTS_PER_COLUMN, num_products)
-        chunk = designations[start:end]
+        chunk = rows[start:end]
 
-        data_col = 1 + i * 2  # 1,3,5,... separator columns 2,4,6,...
-        for r, value in enumerate(chunk, start=3):
-            ws.cell(row=r, column=data_col, value=value)
+        sfx_col = 1 + i * 3
+        article_col = 2 + i * 3
+        for r, (sfx_qty, designation) in enumerate(chunk, start=3):
+            ws.cell(row=r, column=sfx_col, value=sfx_qty if sfx_qty != "" else None)
+            ws.cell(row=r, column=article_col, value=designation)
 
     wb.save(out_file)
 
@@ -209,6 +236,8 @@ async def upload(file: UploadFile = File(...)):
         except (InvalidFileException, zipfile.BadZipFile, xlrd.biffh.XLRDError) as e:
             return JSONResponse(status_code=400, content={"error": "Invalid Excel file.", "details": str(e)})
 
+        stock_time = _read_stock_time(temp_path, ext)
+
         required = ["Site", "Code", "Désignation Article"]
         missing_cols = [c for c in required if c not in headers]
         if missing_cols:
@@ -230,7 +259,7 @@ async def upload(file: UploadFile = File(...)):
             i = col_1based - 1
             return row[i] if 0 <= i < len(row) else None
 
-        sfx_products = set()
+        sfx_products = {}  # (code, des) -> sfx_qty
         cam_products_map = {cam: set() for cam in cam_sites}
 
         for row in rows_iter:
@@ -248,22 +277,29 @@ async def upload(file: UploadFile = File(...)):
                     stock_val = _to_float(get_cell(row, stock_col))
                     if stock_val is None or stock_val < 4:
                         continue
-                sfx_products.add((code, des))
+                    sfx_qty = stock_val
+                else:
+                    sfx_qty = ""  # blank when Stock Disponible column is absent
+                sfx_products[(code, des)] = sfx_qty
             elif site in cam_products_map:
                 cam_products_map[site].add((code, des))
 
         results = []
 
-        for cam in cam_sites:
-            missing = sfx_products - cam_products_map[cam]
-            missing = {p for p in missing if p[0] not in IGNORED_CODES_SET}
+        sfx_set = set(sfx_products.keys())
 
-            designations = sorted([p[1] for p in missing])
+        for cam in cam_sites:
+            missing = sfx_set - cam_products_map[cam]
+            missing = {p for p in missing if p[0] not in IGNORED_CODES_SET}
+            # p[1] is already uppercased by _norm, so startswith("PALETTES") is sufficient
+            missing = {p for p in missing if not p[1].startswith("PALETTES")}
+
+            rows = sorted([(sfx_products[p], p[1]) for p in missing], key=lambda item: item[1])
 
             out_file = os.path.join(OUTPUT_DIR, f"{cam}.xlsx")
-            write_staggered_excel(out_file, cam, designations)
+            write_staggered_excel(out_file, cam, rows, stock_time)
 
-            results.append({"cam": cam, "count": len(designations), "file": f"/download/{cam}.xlsx"})
+            results.append({"cam": cam, "count": len(rows), "file": f"/download/{cam}.xlsx"})
 
         zip_path = os.path.join(OUTPUT_DIR, "all_cams.zip")
         with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as z:
