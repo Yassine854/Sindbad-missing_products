@@ -468,7 +468,11 @@ def write_pdf_report(out_file: str, cam: str, rows: list, stock_time: str = "", 
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "depots": list(DEPOT_CAMS.keys())})
+    return templates.TemplateResponse(
+    request=request,
+    name="index.html",
+    context={"depots": list(DEPOT_CAMS.keys())}
+)
 
 
 @app.post("/upload/")
