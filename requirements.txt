@@ -5,3 +5,5 @@ openpyxl
 xlsxwriter
 python-multipart
 jinja2
+xlrd>=2.0.1
+reportlab
