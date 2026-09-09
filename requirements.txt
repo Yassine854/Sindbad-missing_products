@@ -7,3 +7,4 @@ python-multipart
 jinja2
 xlrd>=2.0.1
 reportlab
+python-3.11.9
